@@ -72,6 +72,9 @@ Using data visualization techniques, it explores how movie production and genre 
    - Increased global film production over time
    - Genre diversification in North America during 1930s
    - Recent surge in Action and Drama films in Asia
+---
+## 🎬 plotly 
+<video src="https://github.com/MINJIinFrance/M2_Visualisation_project/blob/main/Image_videos/Plotly_Result.mp4?raw=true" controls></video>
 
 ## Installation
 1. Clone the repository
