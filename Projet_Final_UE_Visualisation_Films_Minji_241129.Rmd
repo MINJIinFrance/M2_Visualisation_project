@@ -1,0 +1,585 @@
+---
+title: "Projet_UE_visualisation_films"
+author: "Minji NAM"
+date: "2024-11-15"
+output: 
+  xaringan::moon_reader:
+    css: ['default','css/my_style.css']
+    lib_dir: libs
+    seal: false
+    nature:
+      ratio: '4:3'
+      countIncrementalSlides: false
+      self-contained: true
+      beforeInit: "addons/macros.js"
+      highlightLines: true
+---
+
+```{r,include=F}
+library(xaringan)
+library(tidyverse)
+library(scales)
+library(tidyverse)
+library(plotly)
+```
+
+class: center, middle, title
+
+<div style="position: absolute; top: 10px; left: 10px; width: 80px;">
+![Logo](img/logo_UniParis.png)
+</div>
+# Projet de visualisation
+## Analyse de l'évolution des genres cinématographiques
+
+UE Visualisation, 2024-2025
+
+### Présenté par:
+### LACOMBE Mylène, NAM Minji
+
+---
+# Introduction
+
+### Question 
+- Comment la popularité des différents genres de films a-t-elle évolué par continent au cours du temps ?
+
+> ##### Sous-questions
+> - Quels continents dominent les lieux de tournage ?
+> - Quels genres de films dominent le plus  ?
+
+### Objectif
+- Analyser l'évolution du type de film filmés par continent au cours du temps
+
+---
+# Les bases de données 
+```{r,echo=F}
+film <- read.csv("filmtv_movies.csv")
+continent <-  read.csv("Countries_by_continents.csv")
+
+# Fusionnement de deux datasets (film dataset + Countries by continents dataset)
+film_final<-film %>% 
+  select(year,country, genre) %>% 
+  separate_rows(country, sep = ", ") %>% 
+  merge(continent, by.x = "country", by.y = "Country") %>% 
+  na.omit() %>% 
+  filter(genre!="")
+
+# Création des nouvelles variables : Nombre de films par continent
+film_final<-film_final %>% 
+  group_by(Continent) %>% 
+  mutate(n_continent=n()) %>% 
+  ungroup %>% 
+  group_by(genre) %>% 
+  mutate(n_genre=n()) %>% 
+  ungroup
+```
+
+### Le data set principal:
+
+Nom : FilmTV movies dataset
+  - 41399 lignes et 19 colonnes
+
+> source : https://www.kaggle.com/datasets/stefanoleone992/filmtv-movies-dataset/data 
+ 
+Les attributs de notre dataset sont :
+
+![](img/Film_colnames.png)
+
+
+---
+### Le dataset secondaire :
+Nom : Countries by Continent
+  - 196 lignes et 2 colonnes
+
+> source : https://www.kaggle.com/datasets/hserdaraltan/countries-by-continent 
+
+Les attributs de notre dataset sont :
+
+![](img/Continent_colnames.png)
+
+---
+## Le dataset modifié pour l'analyse :
+
+#### - Sélection des variables nécessaires du dataset principal :
+> - year : Année de sortie du film
+> - genre : Genre du film
+> - country : Lieu de tournage du film
+          
+####  - Merge des deux datasets par pays
+        
+####  - Suppression des lignes avec des données manquantes
+        
+####  - Ajout de nouvelles colonnes : 
+> - n_continent : Nombre de films par continent 
+> - n_genre : Nombre de films par genre
+
+#### - 46417 lignes et 6 colonnes
+> - country, year, genre, Continent, n_continent, n_genre  
+
+---
+
+class: middle
+
+# 1. Nombre de films tournés par continent
+
+## Quels continents dominent les lieux de tournage ?
+#### - Nombre de film en fonction des continents
+
+> **Représentation par un barplot**
+> - Variable x : Continents (catégorielle) 
+> - Variable y : Nombre de films par continent (discrète)
+
+---
+**Etape 1**. Création d'un barplot pour le nombre de films par continent
+
+```{r barplot nb films par continent, echo=TRUE, fig.align="center", fig.show="hold", warning=FALSE, out.width="50%"}
+film_final %>% 
+  group_by(Continent) %>% 
+  distinct(n_continent) %>% 
+  ggplot(aes(Continent,
+             n_continent))+
+  geom_bar(stat="identity")
+```
+
+---
+**Etape 2**. Tri des continents en ordre décroissant selon le nombre de films
+
+```{r ordre desc, echo=TRUE, fig.align="center", fig.show="hold", warning=FALSE, out.width="50%"}
+film_final %>% 
+  group_by(Continent) %>% 
+  distinct(n_continent) %>% 
+  arrange(desc(n_continent)) %>% 
+  ggplot(aes(fct_reorder(Continent,n_continent, .desc = T),
+             n_continent))+
+  geom_bar(stat="identity")
+```
+
+---
+**Etape 3**. Personnalisation des couleurs des barres
+
+```{r couleur,warning=FALSE, echo=TRUE, fig.show="hold", out.width="50%", fig.align="center"}
+film_final %>% 
+  group_by(Continent) %>% 
+  distinct(n_continent) %>% 
+  arrange(desc(n_continent)) %>% 
+  ggplot(aes(fct_reorder(Continent,n_continent, .desc = T),
+             n_continent))+
+  geom_bar(stat="identity",
+           fill="skyblue")
+```
+
+---
+**Etape 4**. Ajout de labels aux axes et d'un titre au barplot
+
+```{r labs,warning=FALSE, echo=TRUE, fig.show="hold", out.width="40%", fig.align="center"}
+film_final %>% 
+  group_by(Continent) %>% 
+  distinct(n_continent) %>% 
+  arrange(desc(n_continent)) %>% 
+  ggplot(aes(fct_reorder(Continent,n_continent, .desc = T),
+             n_continent))+
+  geom_bar(fill="skyblue",
+           stat="identity") +
+  labs(x = "Continents", 
+       y = "Nombre de films", 
+       title = "Nombre de film tournés par continent")
+```
+
+---
+**Etape 5**. Application d'un thème minimaliste avec suppression des grilles
+- Ajout de tirets sur l'axe des abscisses pour indiquer les valeurs
+
+.pull-left[
+```{r themes,warning=FALSE, echo=TRUE}
+plot5 <- film_final %>% 
+  group_by(Continent) %>% 
+  distinct(n_continent) %>% 
+  arrange(desc(n_continent)) %>%  
+  ggplot(aes(fct_reorder(Continent, n_continent, .desc = TRUE), 
+             n_continent)) +
+  geom_bar(stat = "identity",
+           fill="skyblue") +
+  labs(x = "Continents", 
+       y = "Nombre de films", 
+       title = "Nombre de films tournés par continent")+
+  theme_minimal() +
+  theme(panel.grid = element_blank())+
+  theme(axis.ticks.x = element_line(color="black",size=0.5),
+        axis.ticks.length = unit(0.2,"cm"))
+```
+]
+
+.pull-right[
+```{r,fig.show="hold",echo=F, out.width="100%", fig.align="center"}
+plot5
+```
+]
+
+---
+**Etape finale**. Rotation du barplot pour un affichage horizontal des barres
+
+```{r coord_flip ,warning=FALSE, echo=TRUE,size=1}
+plot_nb_continent <- film_final %>% 
+  group_by(Continent) %>% 
+  distinct(n_continent) %>% 
+  arrange(desc(n_continent)) %>%  
+  ggplot(aes(fct_reorder(Continent, n_continent, .desc = TRUE), 
+             n_continent)) +
+  geom_bar(stat = "identity",
+           fill="skyblue") +
+  labs(x = "Continents", 
+       y = "Nombre de films", 
+       title = "Nombre de film tournés par continent")+
+  theme_minimal() +
+  theme(panel.grid = element_blank())+
+  coord_flip() #inverser les axes
+```
+
+---
+```{r barplot final,warning=FALSE, echo=F, fig.show="hold", out.width="75%", fig.align="center"}
+plot_nb_continent
+```
+
+---
+class: middle
+
+## Quels continents dominent les lieux de tournage ?
+
+>#### L'Europe et l'Amérique du Nord sont les continents qui dominent le plus les lieux de tournage avec plus de 20 000 films chacun. Il y a un écart important avec le 3e continent, l'Asie, qui compte moins de 500 films
+
+---
+class: middle
+
+# 2. Nombre de films par genre
+
+## Quels genres de films dominent le plus?
+        
+> - **Représentation par un barplot**
+>   - Variable x : Genre (catégorielle) 
+>   - Variable y : Nombre de films (discrète)
+
+> - **Représentation par un pie plot**
+>   - Différentes proportions des genres de films
+
+---
+**Etape 1**. Création d'un barplot représentant le nombre de films par genres par ordre décroissant
+
+```{r,warning=FALSE, echo=TRUE, fig.show="hold", fig.align="center",out.width="50%",size="scriptsize"}
+film_final %>% 
+  group_by(genre) %>% 
+  distinct(n_genre) %>% 
+  arrange(desc(n_genre)) %>% 
+  ggplot()+
+  aes(fct_reorder(genre,n_genre, .desc = T),
+             n_genre)+
+  geom_bar(stat="identity")
+```
+
+---
+**Etape 2**. Coloration des barres par une palette personnalisée
+- Définir une palette de couleurs personnalisée pour les barres
+
+```{r palette, warning=FALSE, echo=TRUE,out.width="40%", fig.align='center', fig.show='hold'}
+color_palette<-colorRampPalette(c("orange","darkgrey"))(n_distinct(film_final$genre))
+film_final %>% 
+  group_by(genre) %>% 
+  distinct(n_genre) %>% 
+  arrange(desc(n_genre)) %>% 
+  ggplot()+
+  aes(fct_reorder(genre,n_genre, .desc = T),n_genre)+
+  geom_bar(stat="identity",
+           fill=color_palette)
+```
+
+---
+**Etape 3**. Ajout d'étiquettes et titre du barplot
+
+.pull-left[
+```{r labels, warning=F, echo=T}
+color_palette<-colorRampPalette(c("orange","darkgrey"))(n_distinct(film_final$genre))
+plot3_genre <- film_final %>% 
+  group_by(genre) %>% 
+  distinct(n_genre) %>% 
+  arrange(desc(n_genre)) %>% 
+  ggplot()+
+  aes(fct_reorder(genre,n_genre, .desc = T),n_genre)+
+  geom_bar(stat="identity",
+           fill=color_palette)+
+  labs(x = "Genre", 
+       y = "Nombre de films",
+       title = "Nombre de films par genre")
+```
+]
+
+.pull-right[
+```{r,warning=FALSE, echo=F, fig.show="hold", out.width="100%", fig.align="center"}
+plot3_genre
+```
+]
+
+---
+**Etape 4**. Optimisation visuelle et rotation des axes
+- Tourner les axes, supprimer la grille et ajuster les éléments visuels (tirets, arrière-plan)
+
+.pull-left[
+```{r theme, warning=FALSE, echo=TRUE, fig.show="hold", out.width="50%", fig.align="center"}
+color_palette<-colorRampPalette(c("orange","darkgrey"))(n_distinct(film_final$genre))
+plot4_genre <- film_final %>% 
+  group_by(genre) %>% 
+  distinct(n_genre) %>% 
+  arrange(desc(n_genre)) %>% 
+  ggplot()+
+  aes(fct_reorder(genre,n_genre, .desc = T),n_genre)+
+  geom_bar(stat="identity",
+           fill=color_palette)+
+  labs(x = "Genre", 
+       y = "Nombre de films",
+       title = "Nombre de films par genre")+
+  coord_flip()+
+  theme(panel.grid = element_blank(), 
+        panel.background = element_blank())+
+  theme(axis.ticks.x = element_line(color = "black", size = 0.5),
+    axis.ticks.length.x = unit(0.1, "cm"),
+    axis.ticks.length.y = unit(0,"cm"))
+```
+]
+
+.pull-right[
+```{r, echo=FALSE,fig.show="hold", out.width="100%"}
+plot4_genre
+```
+]
+
+---
+**Etape 5**. Ajustement des échelles du graphique
+- par 5000 -> 2000
+
+```{r echelles, warning=FALSE, echo=T}
+color_palette<-colorRampPalette(c("orange","darkgrey"))(n_distinct(film_final$genre))
+plot_genre_final <- film_final %>% 
+  group_by(genre) %>% 
+  distinct(n_genre) %>% 
+  arrange(desc(n_genre)) %>% 
+  ggplot()+
+  aes(fct_reorder(genre,n_genre, .desc = T),n_genre)+
+  geom_bar(stat="identity",
+           fill=color_palette)+
+  labs(x = "Genre", 
+       y = "Nombre de films",
+       title = "Nombre de films par genre")+
+  coord_flip()+
+  theme(panel.grid = element_blank(), 
+        panel.background = element_blank())+
+  theme(axis.ticks.x = element_line(color = "black", size = 0.5),
+    axis.ticks.length.x = unit(0.1, "cm"),
+    axis.ticks.length.y = unit(0,"cm"))+
+  scale_y_continuous(
+    breaks = seq(0, max(film_final$n_genre), by = 2000))
+```
+
+---
+
+```{r barplot genre final,warning=FALSE, echo=F, fig.show="hold", out.width="75%", fig.align="center"}
+plot_genre_final
+```
+
+---
+**Etape 6**. Création d'un pie plot
+- 1) Création des proportions pour les genres
+
+```{r 10 premiers genres, warning=FALSE, echo=TRUE}
+genre_data <- film_final %>%
+  count(genre) %>%
+  mutate(proportion = n / sum(n)) %>%
+  arrange(desc(proportion)) %>% 
+  mutate(color_group = ifelse(row_number() <= 10, 
+                              "Top 10", "Autre"))
+```
+
+---
+**Etape 6**. Création d'un pie plot
+- 2) Transformation en diagramme circulaire
+
+```{r,echo=T,fig.show='hold',out.width="50%",fig.align='center'}
+ggplot(genre_data, aes(x = "",y = proportion, fill=color_group)) +
+  geom_bar(stat = "identity",width = 1,color = "black") +
+  coord_polar(theta = "y")
+```
+
+---
+**Etape 6**. Création d'un pie plot
+- 3)  Ajout des couleurs personnalisées, des étiquettes, et simplification du thème
+
+```{r,echo=T,fig.show='hold',out.width="50%",fig.align='center', warning=F} 
+pie_plot <- ggplot(genre_data, aes(x = "", y = proportion, fill = color_group)) +
+  geom_bar(stat = "identity", width = 1, color = "darkgrey") +
+  coord_polar(theta = "y") +
+  scale_fill_manual(values = c("Top 10" = "orange", "Autre" = "darkgrey"))+
+  labs(title = "Répartition des genres de films",
+       fill = "Genres de film")+
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0))+
+  geom_text(data = subset(genre_data, color_group == "Top 10"), 
+            aes(label = genre,
+                x = 1.3, 
+                # Position centrale pour chaque portion
+                y = cumsum(proportion) - proportion / 2),
+            color = "black", 
+            size = 4,
+            check_overlap = TRUE) # Éviter les chevauchements entre les étiquettes
+
+```
+
+---
+**Etape finale**. Combinaison des deux graphiques : barplot + pie plot
+
+.pull-left[
+```{r, echo=F, fig.show='hold'}
+plot_genre_final
+```
+]
+
+.pull-right[
+```{r, echo=F,fig.show='hold'}
+pie_plot
+```
+
+]
+---
+
+class: middle
+
+## Quels genres de films dominent le plus?
+
+>####  Les films dramatiques et comiques sont les genres qui dominent le plus. Ainsi, pour atteindre notre objectif, nous sélectionnons les 10 premiers genres de films.
+
+---
+
+class: middle, center
+
+## Comment la popularité des différents genres de films a-t-elle évolué par continent au fil du temps ?
+        
+> ####  Représentation graphique animée 
+
+---
+**Etape 1**. Compléter les données pour inclure toutes les combinaisons possibles
+
+> - **top_10_genre** : Dataset comprenant les noms des 10 genres ayant le plus grand nombre de films
+> - **film_top10** : Dataset avec filtrage des données pour ne conserver que les films appartenant au top 10 des genres 
+> - **data_complete** : Dataset comprenant le nombre de film par année, par genre et par continent
+
+```{r,echo=T}
+top_10_genres <- film_final %>% 
+  group_by(genre) %>% 
+  distinct(n_genre) %>% 
+  arrange(desc(n_genre)) %>%
+  ungroup %>% 
+  top_n(10, n_genre)
+
+film_top10 <- film_final %>%
+  filter(genre %in% top_10_genres$genre)
+
+data_complete <- film_top10 %>%
+  group_by(year, Continent, genre) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  tidyr::complete(year, Continent, genre, fill = list(n = 0))
+```
+
+---
+**Etape 2**. Création d'un barplot représentant le nombre de film par genre en fonction des continents à l'aide de plotly
+
+```{r,echo=T,fig.show='hold',fig.align='center', warning=F}
+plot_ly(data_complete,x = ~Continent,y = ~n,color = ~genre,type = "bar")
+```
+
+---
+**Etape 3**. Ajout de l'animation pour visualiser l'évolution annuelle
+
+```{r,echo=T,fig.show='hold',out.width="70%",fig.align='center', warning=F}
+plot_ly(data_complete,
+        x = ~Continent,y = ~n,color = ~genre,type = "bar",
+        frame= ~year)
+```
+
+---
+**Etape 4**. Ajout du titre et des étiquettes des axes
+
+```{r,echo=T,fig.show='hold',out.width="80%",fig.align='center', warning=F}
+plot_ly(data_complete,
+        x = ~ Continent,
+        y = ~ n,
+        color = ~genre,
+        type = "bar",
+        frame = ~year) %>%
+  layout(title = "Evolution du nombre de films par genres\n en fonction des continents au fil du temps",
+         xaxis = list(title = "Continent"),
+         yaxis = list(title = "Nombre de films")) -> plot_anime4
+```
+
+---
+
+```{r,echo=F,fig.show='hold',out.width="100%",fig.align='center', warning=F}
+plot_anime4
+```
+
+---
+**Etape Finale**. Ajout des informations interactives et réglage de la vitesse entre chaque année (500 millisecondes)
+
+```{r,echo=T,fig.show='hold',out.width="50%",fig.align='center'}
+plot_ly(data_complete,
+        x = ~Continent,
+        y = ~n,
+        color = ~genre,
+        type = "bar",
+        frame = ~year,
+        hoverinfo = "text",
+        hovertemplate = ~str_c("Genre : ", genre, "\n",
+                               "Nombre de films : ", n)) %>%
+   layout(title = "Evolution du nombre de films par genres\n en fonction des continents au fil du temps",
+         xaxis = list(title = "Continent"),
+         yaxis = list(title = "Nombre de films"))%>% 
+  animation_opts(500)->plot_animeF
+```
+
+---
+
+```{r,echo=F,fig.show='hold',out.width="100%",fig.align='center', warning=F}
+plot_animeF
+```
+
+---
+## Remarques
+
+▶ Depuis 1910, les films dramatiques et comiques ont toujours été présents. Le genre western a commencé à se répandre en Amérique du Nord dès 1914.
+
+▶ Dans les années 1930, en Amérique du Nord, les genres de film étaient plus diversifiés qu'en Europe.
+> En Europe, on trouvait principalement trois genres de films : le drame, la comédie et le documentaire. <br>
+> En Amérique du Nord, il y avait une plus grande variété de genres : le thriller, l'aventure, le romantique et le western.
+
+▶ Dans les années 1950, les films les plus courants étaient des films comiques en Europe et western en Amérique du Nord
+> Le genre Western se popularise en Europe dans les années 60-70, mais diminue fortement dans les années 80.
+
+---
+## Remarques
+
+▶ A partir des années 2000, l'Europe suivi de l'Amérique du Nord sont les deux continents qui accueillent le plus de film dramatique et comique.
+> Avec une augmentation qui va jusqu'à près de 300 films dramatiques tournés en Europe en 2017
+
+▶ Cependant, dans les années 2020, le troisième genre de film le plus tourné en Europe est le film documentaire et en Amérique du Nord, le thriller.
+
+▶ On remarque une augmentation des lieux de tournage à travers le monde au cours du temps
+> Plus particulièrement en Asie pour les films d'action et dramatiques aux alentours des années 2000
+
+---
+# Conclusion 
+
+### Pour conclure, on remarque une augmentation des lieux de tournage dans le monde entier, particulièrement en Europe et en Amérique du Nord. <br>
+###De plus, il y a une forte augmentation de film tournés par année. <br>
+### Aussi, l'évolution des genres cinématographiques révèle des tendances distinctes selon les époques et les continents.
+
+---
+# Merci pour votre attention 
+
+<div style="text-align: center;">
+  <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExMm0wMjY4OGx0cHF3d3R5cm1uc3MxdTI2dnNkZXBvenZuNmcxMjdwNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/rY93u9tQbybks/giphy.gif" alt="Mon GIF" style="width: 500px; height: auto;">
+</div>
+
