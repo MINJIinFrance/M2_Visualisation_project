@@ -30,33 +30,33 @@ Using data visualization techniques, it explores how movie production and genre 
    - Contains 196 rows and 2 columns
    - Maps countries to their respective continents
 
-## Project Structure
-[!note] Présentation du projet
+## Project outline and grading criteria
+> **Présentation du projet**
 > - Trouver un dataset 
 > - Tenter de répondre à une question à l'aide de visualisation 
 >
->Données 
+> **Données** 
 >- Vous identifiez une source de données publique ouverte(data.gouv.fr, johns hopkins, etc)
 >- Il faudra justifier le choix du dataset(source, contenu, provenance, etc)
 >
->Objectifs
+> **Objectifs**
 >- Produire des visualisations
 >- Répondant à la question
 >- En choisissant un des buts suivants de la communication : enregistrer l'information, analyser, communiquer
->  - Essayer de deviner ma hypothèse : ***expliciter***
+>- Essayer de deviner ma hypothèse : ***expliciter***
 >  
-> Conditions
+> **Conditions**
 > - Production d'au moins deux visualisations différentes
 > 	- Dont au moins une statique et **une interactive**
 > 	- répartition spatiale : prévalence des malaldies
 > - Produire une présentation de 10 min présentant vos visualisations
 > - Justifier vos choix : de dataset, de design, de représentation, etc
 >  
->  Presentation 10 mins + 5 mins de question
->  - Cheminement intellectuel ( )
+>  **Presentation 10 mins + 5 mins de question**
+>  - Cheminement intellectuel
 >  - Commencer par defaut - pour avoir la visualisation finale
->  - Dans les grandes lignes : étape par étape :baseline-couleur-annotations-..., Choix de la palette (importante)
->  - R markdown : 
+>  - Dans les grandes lignes : étape par étape (baseline-couleur-annotations-..., Choix de la palette (importante))
+>  - R markdown
 
 ## Key Findings
 1. **Geographic Distribution**
