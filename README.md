@@ -1,4 +1,4 @@
-# Film Genre Analysis Project
+# Visualisation Project : Film Genre Analysis Project
 
 ## Overview
 This project analyzes the evolution of film genres across different continents over time. 
